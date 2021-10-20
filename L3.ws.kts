@@ -1,100 +1,125 @@
+import java.security.SecureRandom;
+
 import java.util.*
 
-data class Subject(var title: String, var grade: Int)
+sealed class Result<T>
 
-data class Student(val name: String?, val birthYear: Int, val subjects: List<Subject>) {
+class Success<T>(val data : T) : Result<T>(){
 
-    val averageGrade
-        get() = subjects.average { it.grade.toFloat() }
-    val age
-        get()= Calendar.getInstance().get(Calendar.YEAR) - birthYear
-
-    override fun toString(): String =
-        "\n\tName: $name, Year of birth: $birthYear, Subjects: $subjects, AVG grade: $averageGrade "
+override fun toString() = "data: $data"
 
 }
 
-fun <T> Iterable<T>.average(block: (T) -> Float): Float {
-    var sum = 0.0
-    var count = 0
-    for (element in this) {
-        sum += block(element)
-        ++count
-    }
-    return (sum / count).toFloat()
+class Error<T>(val message : String = "Unknown error") : Result<T>(){
+
+override fun toString() = "$message\n"
+
 }
 
-data class University(val title: String, val students: MutableList<Student>) {
+enum class Operation{
 
-    val average
-        get() = students.filter{ it.age in 17..20 }.average { it.averageGrade }
+SORT_ASC
 
-    val courses
-        get() = students.groupBy { it.age }.mapKeys {
-            when (it.key) {
-                17 -> 1
-                18 -> 2
-                19 -> 3
-                20 -> 4
-                else -> throw StudentTooYoungException()
-            }
-        }
+{
+
+override fun <T : Comparable<T» invoke(list: List<T>) : List<T>
+
+{
+
+return list.sorted()
+
 }
 
-class StudentTooYoungException : Exception("The student is too young")
+},
 
-enum class StudyProgram(private val title: String) {
-    DISCIPLINE1("History"), DISCIPLINE2("English"),
-    DISCIPLINE3("Math"), DISCIPLINE4("Physics"),
-    DISCIPLINE5("Philosophy");
+SORT_DESC
 
-    infix fun withGrade(grade: Int): Subject = Subject(title, grade)
+{
+
+override fun <T : Comparable<T» invoke(list: List<T>) : List<T>
+
+{
+
+return list.sortedDescending()
+
 }
 
-typealias StudentListener = ((Student) -> Unit)
+},
 
-val students = mutableListOf(
-    Student("Ballayev Iluya", 2002, listOf(StudyProgram.DISCIPLINE1 withGrade 4, StudyProgram.DISCIPLINE2 withGrade 3)),
-    Student("Makakin Mikhail", 2002, listOf(StudyProgram.DISCIPLINE1 withGrade 5, StudyProgram.DISCIPLINE2 withGrade 4)),
-    Student("Stepin Kirill", 2003, listOf(StudyProgram.DISCIPLINE4 withGrade 5, StudyProgram.DISCIPLINE5 withGrade 5)),
-    Student("Brashin Dmitry", 2001, listOf(StudyProgram.DISCIPLINE4 withGrade 5, StudyProgram.DISCIPLINE5 withGrade 4)),
-    Student("Cringev Alexander", 2003, listOf(StudyProgram.DISCIPLINE1 withGrade 3, StudyProgram.DISCIPLINE3 withGrade 3)),
-    Student("Cherpakin Alexander", 2002, listOf(StudyProgram.DISCIPLINE1 withGrade 5, StudyProgram.DISCIPLINE3 withGrade 3)),
-)
+SHUFFLE
 
-object DataSource {
-    val university: University by lazy {
-        University("MRSU", students)
-    }
+{
 
-    var onNewStudentListener: StudentListener? = null
+override fun <T : Comparable<T» invoke(list: List<T>) : List<T>
 
+{
 
-    fun addStudent(students: MutableList<Student>) {
-        println("Adding a student")
-        println("Enter student's name: ")
-        val name = readLine()
-        println("Enter the year of birth: ")
-        val year = Scanner(System.`in`)
-        val birthYear: Int = year.nextInt()
-        students.add(Student(name, birthYear, listOf(StudyProgram.DISCIPLINE3 withGrade 4, StudyProgram.DISCIPLINE1 withGrade 3)))
-        val addedStudent = students.last()
-        onNewStudentListener?.invoke( addedStudent)
-    }
+return list.shuffled()
+
+}
+
+};
+
+abstract operator fun <T : Comparable<T» invoke(list: List<T>): List<T>
+
+}
+
+fun <T : Comparable<T» List<T>.operate(operation: Operation): Result<List<T»
+
+{
+
+if (this.isEmpty()) return Error("Empty")
+
+when (operation)
+
+{
+
+Operation.SORT_ASC -> return Success(Operation.SORT_ASC(this))
+
+Operation.SORT_DESC -> return Success(Operation.SORT_DESC(this))
+
+Operation.SHUFFLE -> return Success(Operation.SHUFFLE(this))
+
+}
+
+}
+
+fun generateStrings(stringsLenght: Int, length : Int) : List<String>
+
+{
+
+var strlist = mutableListOf<String>()
+
+val alphabet: List<Char> = ('a'..'z') + ('A'..'Z')
+
+for(i in 1..length) strlist.add(List(stringsLenght) { alphabet.random() }.joinToString(""))
+
+return strlist
+
+}
+
+fun generateIntegers(length : Int) : List<Int>
+
+{
+
+return (-1000..1000).shuffled().take(length)
 
 }
 
 fun main() {
 
-    println("University: " + DataSource.university.title)
-    println("\t" + DataSource.university.students.joinToString(separator = "\t"))
-    println("Division by course = " + DataSource.university.courses)
-    println("AVG university grade = " + DataSource.university.average)
+println(generateStrings(4,5).operate(Operation.SORT_ASC))
 
-    DataSource.onNewStudentListener = {
-        println("New student: $it \n" + "AVG university grade: ${DataSource.university.average}")
-    }
-    DataSource.addStudent(students)
+println(generateStrings(4,5).operate(Operation.SORT_DESC))
 
-    println("Division by course = " + DataSource.university.courses)
+println(generateStrings(4,5).operate(Operation.SHUFFLE))
+
+println(generateIntegers(5).operate(Operation.SORT_ASC))
+
+println(generateIntegers(5).operate(Operation.SORT_DESC))
+
+println(generateIntegers(5).operate(Operation.SHUFFLE))
+
 }
+
+main()
